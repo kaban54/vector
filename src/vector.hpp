@@ -412,27 +412,27 @@ class Vector {
     }
 
     constexpr reverse_iterator rbegin() noexcept {
-        return reverse_iterator(data_ + sz_ - 1);
+        return std::make_reverse_iterator(end());
     }
 
     constexpr const_reverse_iterator rbegin() const noexcept {
-        return const_reverse_iterator(data_ + sz_ - 1);
+        return std::make_reverse_iterator(cend());
     }
 
     constexpr const_reverse_iterator crbegin() const noexcept {
-        return const_reverse_iterator(data_ + sz_ - 1);
+        return std::make_reverse_iterator(cend());
     }
 
     constexpr reverse_iterator rend() noexcept {
-        return reverse_iterator(data_ - 1);
+        return std::make_reverse_iterator(begin());
     }
 
     constexpr const_reverse_iterator rend() const noexcept {
-        return const_reverse_iterator(data_ - 1);
+        return std::make_reverse_iterator(cbegin());
     }
 
     constexpr const_reverse_iterator crend() const noexcept {
-        return const_reverse_iterator(data_ - 1);
+        return std::make_reverse_iterator(cbegin());
     }
 
 
@@ -441,9 +441,60 @@ class Vector {
         sz_ = 0;
     }
 
-    constexpr iterator insert(const_iterator pos, const_reference val) {
-        if (sz_ == cp_) reserve(cp_ == 0 ? 2 : cp_ * 2);
+    constexpr iterator insert(const_iterator position, const_reference val) {
+        difference_type dif = position - cbegin();
+        if (sz_ == cp_) {
+            reserve(cp_ == 0 ? 2 : cp_ * 2);
+        }
+        iterator pos = begin() + dif;
 
+        if (pos != end()) {
+            std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
+            for (auto it = end() - 1; it != pos, --it) {
+                *it = std::move(*(it - 1));
+            }
+        }
+        std::allocator_traits<allocator_type>::construct(allocator_, pos().ptr_, val);
+        sz_++;
+        return pos;
+    }
+
+    constexpr iterator insert(const_iterator position, T&& val) {
+        difference_type dif = position - cbegin();
+        if (sz_ == cp_) {
+            reserve(cp_ == 0 ? 2 : cp_ * 2);
+        }
+        iterator pos = begin() + dif;
+
+        if (pos != end()) {
+            std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
+            for (auto it = end() - 1; it != pos, --it) {
+                *it = std::move(*(it - 1));
+            }
+        }
+        std::allocator_traits<allocator_type>::construct(allocator_, pos().ptr_, std::move(val));
+        sz_++;
+        return pos;
+    }
+
+    constexpr iterator insert(const_iterator position, size_type count, const_reference val) {
+        difference_type dif = position - cbegin();
+        if (sz_ + count > cp_) {
+            size_type new_cap = (cp_ == 0 ? 2 : cp_ * 2);
+            if (sz_ + count > new_cap) new_cap = sz_ + count;
+            reserve(new_cap);
+        }
+        iterator pos = begin() + dif;
+
+        if (pos != end()) {
+            std::allocator_traits<allocator_type>::construct(allocator_, (end() + count - 1).ptr_, std::move(back()));
+            for (auto it = end() + count - 2; it != pos + count - 1, --it) {
+                *it = std::move(*(it - count));
+            }
+        }
+        std::allocator_traits<allocator_type>::construct(allocator_, pos().ptr_, val);
+        sz_ += count;
+        return pos;
     }
 
 
