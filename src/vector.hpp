@@ -366,6 +366,63 @@ class Vector {
         return data_;
     }
 
+
+    constexpr bool empty() const noexcept {
+        return sz_ == 0;
+    }
+
+    constexpr size_type size() const noexcept {
+        return sz_;
+    }
+
+    constexpr size_type max_size() const noexcept {
+        return std::allocator_traits<allocator_type>::max_size(allocator_);
+    }
+
+    constexpr void reserve(size_type new_cap) {
+        if (new_cap <= cp_) return;
+
+        pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, new_cap);
+        for (size_type idx = 0; idx < sz_; ++idx) {
+            std::allocator_traits<allocator_type>::construct(allocator_, new_data + idx, std::move(data_[idx]));
+            std::allocator_traits<allocator_type>::destroy(allocator_, data_[idx]);
+        }
+        if (data_ != nullptr) {
+            std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
+        }
+
+        data_ = new_data;
+        cp_ = new_cap;
+    }
+
+    constexpr size_type capacity() const noexcept {
+        return cp_;
+    }
+
+    constexpr void shrink_to_fit() {
+        if (sz_ == cp_) return;
+
+        if (sz_ == 0) {
+            std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
+            cp_ = 0;
+            data_ = nullptr;
+            return;
+        }
+
+        pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, sz_);
+        for (size_type idx = 0; idx < sz_; ++idx) {
+            std::allocator_traits<allocator_type>::construct(allocator_, new_data + idx, std::move(data_[idx]));
+            std::allocator_traits<allocator_type>::destroy(allocator_, data_[idx]);
+        }
+        if (data_ != nullptr) {
+            std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
+        }
+
+        data_ = new_data;
+        cp_ = sz_;
+    }
+
+
     private:
 
     allocator_type allocator_;
