@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <utility>
 #include "forward.hpp"
+#include <iostream>
 
 namespace myvector {
 
@@ -310,19 +311,19 @@ class Vector {
         return data_[pos];
     }
 
-    constexpr reference front(size_type pos) noexcept {
+    constexpr reference front() noexcept {
         return data_[0];
     }
 
-    constexpr const_reference front(size_type pos) const noexcept {
+    constexpr const_reference front() const noexcept {
         return data_[0];
     }
 
-    constexpr reference back(size_type pos) noexcept {
+    constexpr reference back() noexcept {
         return data_[sz_ - 1];
     }
 
-    constexpr const_reference back(size_type pos) const noexcept {
+    constexpr const_reference back() const noexcept {
         return data_[sz_ - 1];
     }
 
@@ -352,7 +353,7 @@ class Vector {
 
         pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, new_cap);
         Move(allocator_, begin(), end(), iterator(new_data));
-        clear();
+        Destroy(allocator_, begin(), end());
         if (data_ != nullptr) {
             std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
         }
@@ -463,7 +464,7 @@ class Vector {
                 *it = std::move(*(it - count));
             }
         }
-        Fill(allocator_, pos(), pos() + count, val);
+        Fill(allocator_, pos, pos + count, val);
         sz_ += count;
         return pos;
     }
@@ -478,18 +479,19 @@ class Vector {
 
         if (pos != end()) {
             std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
-            for (auto it = end() - 1; it != pos; --it) {
+            for (iterator it = end() - 1; it != pos; --it) {
                 *it = std::move(*(it - 1));
             }
         }
-        std::allocator_traits<allocator_type>::construct(allocator_, pos().ptr_, forward<Args>(args)...);
+
+        std::allocator_traits<allocator_type>::construct(allocator_, pos.ptr_, forward<Args>(args)...);
         sz_++;
         return pos;
     }
 
     constexpr iterator erase(const_iterator position) {
         iterator pos = position;
-        MoveAssign(pos() + 1, end(), pos());
+        MoveAssign(pos + 1, end(), pos);
         --sz_;
         std::allocator_traits<allocator_type>::destroy(allocator_, end());
         return pos;
@@ -561,33 +563,37 @@ class Vector {
     size_type cp_;
     pointer data_;
 
-    static void Copy(allocator_type allocator, const_iterator src,
-                     const_iterator src_end, iterator dst) {
+
+    template<typename Iter>
+    static void Copy(allocator_type allocator, Iter src, Iter src_end, Iter dst) {
         for(;src != src_end; ++src) {
             std::allocator_traits<allocator_type>::construct(allocator, (dst++).ptr_, *src);
         }
     }
 
-    static void Move(allocator_type allocator, iterator src, iterator src_end, iterator dst) {
+    template<typename Iter>
+    static void Move(allocator_type allocator, Iter src, Iter src_end, Iter dst) {
         for(;src != src_end; ++src) {
             std::allocator_traits<allocator_type>::construct(allocator, (dst++).ptr_, std::move(*src));
         }
     }
 
-    static void Destroy(allocator_type allocator, iterator it, iterator end_it) noexcept {
+    template<typename Iter>
+    static void Destroy(allocator_type allocator, Iter it, Iter end_it) noexcept {
         for(;it != end_it; ++it) {
             std::allocator_traits<allocator_type>::destroy(allocator, it.ptr_);
         }
     }
 
-    template<typename... Args>
-    static void Fill(allocator_type allocator, iterator it, iterator end_it, Args&&... args) {
+    template<typename Iter, typename... Args>
+    static void Fill(allocator_type allocator, Iter it, Iter end_it, Args&&... args) {
         for(;it != end_it; ++it) {
             std::allocator_traits<allocator_type>::construct(allocator, it.ptr_, forward<Args>(args)...);
         }
     }
 
-    static void MoveAssign(iterator src, iterator src_end, iterator dst) {
+    template<typename Iter>
+    static void MoveAssign(Iter src, Iter src_end, Iter dst) {
         for(;src != src_end; ++src) {
             *(dst++) = std::move(*src);
         }

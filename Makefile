@@ -4,7 +4,7 @@ LDFLAGS +=
 OBJDIR = obj/
 SRCDIR = src/
 
-all: test
+all: clean test
 
 test: obj/main.o
 	$(CC) -o test obj/main.o $(LDFLAGS)
@@ -16,4 +16,4 @@ clean:
 	rm obj/*.o -f
 	clear
 	
-.PHONY: clean
+.PHONY: test
