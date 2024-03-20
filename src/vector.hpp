@@ -1,4 +1,5 @@
 #include <memory>
+#include <iterator>
 
 namespace myvector {
 
@@ -15,9 +16,8 @@ class Vector {
     using const_reference = const value_type&;
     using pointer = std::allocator_traits<Allocator>::pointer;
     using const_pointer = std::allocator_traits<Allocator>::const_pointer;
-
-    //iterator
-
+    using iterator = std::iterator<std::contiguous_iterator_tag, value_type, difference_type, pointer, reference>;
+    using const_iterator = std::basic_const_iterator<iterator>;
 
     constexpr Vector() noexcept(noexcept(Allocator())):
         allocator_(),
@@ -92,7 +92,6 @@ class Vector {
     size_type cp_;
     pointer data_;
 };
-
 
 // TODO: bool specialization
 
