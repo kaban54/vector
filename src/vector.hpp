@@ -1,6 +1,7 @@
 #include <memory>
 #include <iterator>
 #include <type_traits>
+#include <utility>
 #include "forward.hpp"
 
 namespace myvector {
@@ -458,7 +459,7 @@ class Vector {
 
         if (pos != end()) {
             std::allocator_traits<allocator_type>::construct(allocator_, (end() + count - 1).ptr_, std::move(back()));
-            for (auto it = end() + count - 2; it != pos + count - 1, --it) {
+            for (auto it = end() + count - 2; it != pos + count - 1; --it) {
                 *it = std::move(*(it - count));
             }
         }
@@ -477,7 +478,7 @@ class Vector {
 
         if (pos != end()) {
             std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
-            for (auto it = end() - 1; it != pos, --it) {
+            for (auto it = end() - 1; it != pos; --it) {
                 *it = std::move(*(it - 1));
             }
         }
@@ -490,7 +491,7 @@ class Vector {
         iterator pos = position;
         MoveAssign(pos() + 1, end(), pos());
         --sz_;
-        std::allocator_traits<allocator_type>::destroy(allocator, end());
+        std::allocator_traits<allocator_type>::destroy(allocator_, end());
         return pos;
     }
 
@@ -509,7 +510,7 @@ class Vector {
 
     constexpr void pop_back() noexcept {
         --sz_;
-        std::allocator_traits<allocator_type>::destroy(allocator, end());
+        std::allocator_traits<allocator_type>::destroy(allocator_, end());
     }
 
     constexpr void resize(size_type count) {
@@ -534,6 +535,23 @@ class Vector {
             Fill(allocator_, end(), begin() + count, val);
         }
         sz_ = count;
+    }
+
+    constexpr void swap(Vector& other)
+    noexcept(std::allocator_traits<Allocator>::propagate_on_container_swap::value ||
+             std::allocator_traits<Allocator>::is_always_equal::value) {
+        if (std::allocator_traits<Allocator>::propagate_on_container_swap::value) {
+           std::swap (allocator_, other.allocator_);
+        }
+        size_type buf = sz_;
+        sz_ = other.sz_;
+        other.sz_ = buf;
+        buf = cp_;
+        cp_ = other.cp_;
+        other.cp_ = buf;
+        pointer databuf = data_;
+        data_ = other.data_;
+        other.data_ = databuf;
     }
 
     private:
