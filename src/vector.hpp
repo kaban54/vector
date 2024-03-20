@@ -350,9 +350,27 @@ class Vector {
 
     constexpr void reserve(size_type new_cap) {
         if (new_cap <= cp_) return;
+        if (new_cap >= max_size()) throw std::length_error();
 
         pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, new_cap);
-        Move(allocator_, begin(), end(), iterator(new_data));
+
+        
+
+        iterator current(new_data);
+        try {
+            for(const_iterator it = cbegin(); it != cend(); ++it) {
+                std::allocator_traits<allocator_type>::construct(allocator_, current.ptr_, *it);
+                ++current;
+            }
+        }
+        catch(...) {
+            for(iterator it(new_data); it != current; ++it) {
+                std::allocator_traits<allocator_type>::destroy(allocator_, it.ptr_);
+            }
+            std::allocator_traits<allocator_type>::deallocate(allocator_, new_data, new_cap);
+            throw;
+        }
+
         Destroy(allocator_, begin(), end());
         if (data_ != nullptr) {
             std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
@@ -564,36 +582,32 @@ class Vector {
     pointer data_;
 
 
-    template<typename Iter>
-    static void Copy(allocator_type allocator, Iter src, Iter src_end, Iter dst) {
+    static void Copy(allocator_type allocator, iterator src, iterator src_end, iterator dst) {
         for(;src != src_end; ++src) {
             std::allocator_traits<allocator_type>::construct(allocator, (dst++).ptr_, *src);
         }
     }
 
-    template<typename Iter>
-    static void Move(allocator_type allocator, Iter src, Iter src_end, Iter dst) {
+    static void Move(allocator_type allocator, iterator src, iterator src_end, iterator dst) {
         for(;src != src_end; ++src) {
             std::allocator_traits<allocator_type>::construct(allocator, (dst++).ptr_, std::move(*src));
         }
     }
 
-    template<typename Iter>
-    static void Destroy(allocator_type allocator, Iter it, Iter end_it) noexcept {
+    static void Destroy(allocator_type allocator, iterator it, iterator end_it) noexcept {
         for(;it != end_it; ++it) {
             std::allocator_traits<allocator_type>::destroy(allocator, it.ptr_);
         }
     }
 
-    template<typename Iter, typename... Args>
-    static void Fill(allocator_type allocator, Iter it, Iter end_it, Args&&... args) {
+    template<typename... Args>
+    static void Fill(allocator_type allocator, iterator it, iterator end_it, Args&&... args) {
         for(;it != end_it; ++it) {
             std::allocator_traits<allocator_type>::construct(allocator, it.ptr_, forward<Args>(args)...);
         }
     }
 
-    template<typename Iter>
-    static void MoveAssign(Iter src, Iter src_end, Iter dst) {
+    static void MoveAssign(iterator src, iterator src_end, iterator dst) {
         for(;src != src_end; ++src) {
             *(dst++) = std::move(*src);
         }
