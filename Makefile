@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS += -Wall
+CFLAGS += -Wall -std=c++23
 LDFLAGS +=
 OBJDIR = obj/
 SRCDIR = src/

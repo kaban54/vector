@@ -16,8 +16,102 @@ class Vector {
     using const_reference = const value_type&;
     using pointer = std::allocator_traits<Allocator>::pointer;
     using const_pointer = std::allocator_traits<Allocator>::const_pointer;
-    using iterator = std::iterator<std::contiguous_iterator_tag, value_type, difference_type, pointer, reference>;
+
+    private:
+
+    class VecIter : public std::iterator<std::contiguous_iterator_tag, value_type> {
+        public:
+
+        VecIter(pointer ptr): ptr_(ptr) {}
+
+        VecIter(const VecIter& other): ptr_(other.ptr_) {}
+
+        VecIter& operator=(const VecIter& other) {
+            ptr_ = other.ptr_;
+        }
+
+        reference operator*() const {
+            return *ptr_;
+        }
+
+        reference operator[](size_type idx) {
+            return ptr_[idx];
+        }
+
+        VecIter& operator++() {
+            ++ptr_;
+            return *this;
+        }
+
+        VecIter operator++(int) {
+            return VecIter(ptr_++);
+        }
+
+        VecIter& operator--() {
+            --ptr_;
+            return *this;
+        }
+
+        VecIter operator--(int) {
+            return VecIter(ptr_--);
+        }
+
+        VecIter operator+(int n) const {
+            return VecIter(ptr_ + n);
+        }
+
+        VecIter operator-(int n) const {
+            return VecIter(ptr_ - n);
+        }
+
+        VecIter& operator+=(int n) {
+            ptr_ += n;
+            return *this;
+        }
+
+        VecIter& operator-=(int n) {
+            ptr_ -= n;
+            return *this;
+        }
+
+        difference_type operator-(const VecIter& other) const {
+            return ptr_ - other.ptr_;
+        }
+
+        bool operator==(const VecIter& other) const {
+            return ptr_ == other.ptr_;
+        }
+
+        bool operator!=(const VecIter& other) const {
+            return ptr_ != other.ptr_;
+        }
+        
+        bool operator<=(const VecIter& other) const {
+            return ptr_ <= other.ptr_;
+        }
+        
+        bool operator>=(const VecIter& other) const {
+            return ptr_ >= other.ptr_;
+        }
+
+        bool operator<(const VecIter& other) const {
+            return ptr_ < other.ptr_;
+        }
+        
+        bool operator>(const VecIter& other) const {
+            return ptr_ > other.ptr_;
+        }
+
+        private:
+        pointer ptr_;
+    };
+
+    public:
+
+    using iterator = VecIter;
     using const_iterator = std::basic_const_iterator<iterator>;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
     constexpr Vector() noexcept(noexcept(Allocator())):
         allocator_(),
@@ -68,13 +162,13 @@ class Vector {
 
         }
 
-    constexpr Vector( const vector& other, const Allocator& alloc );
+    constexpr Vector( const Vector& other, const Allocator& alloc );
 
-    constexpr Vector( vector&& other ) noexcept;
+    constexpr Vector( Vector&& other ) noexcept;
 
-    constexpr Vector( vector&& other, const Allocator& alloc );
+    constexpr Vector( Vector&& other, const Allocator& alloc );
 
-    constexpr vector( std::initializer_list<T> init, const Allocator& alloc = Allocator());
+    constexpr Vector( std::initializer_list<T> init, const Allocator& alloc = Allocator());
     
     ~Vector() {
         for (size_type idx = 0; idx < sz_; ++idx) {
