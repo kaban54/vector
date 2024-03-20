@@ -480,12 +480,14 @@ class Vector {
 
 
     constexpr void clear() noexcept {
-        for (size_type idx = 0; idx < sz_; ++idx) {
-            std::allocator_traits<allocator_type>::destroy(allocator_, data_[idx]);
-        }
+        Destroy(allocator_, begin(), end());
         sz_ = 0;
     }
 
+    constexpr iterator insert(const_iterator pos, const_reference val) {
+        if (sz_ == cp_) reserve(cp_ == 0 ? 2 : cp_ * 2);
+
+    }
 
 
     private:
@@ -494,6 +496,25 @@ class Vector {
     size_type sz_;
     size_type cp_;
     pointer data_;
+
+    static void Copy(allocator_type allocator, const_iterator src,
+                     const_iterator src_end, iterator dst) {
+        for(;src != src_end; ++src) {
+            std::allocator_traits<allocator_type>::construct(allocator, (dst++).ptr_, *src);
+        }
+    }
+
+    static void Move(allocator_type allocator, iterator src, iterator src_end, iterator dst) {
+        for(;src != src_end; ++src) {
+            std::allocator_traits<allocator_type>::construct(allocator, (dst++).ptr_, std::move(*src));
+        }
+    }
+
+    static void Destroy(allocator_type allocator, iterator it, iterator end_it,) {
+        for(;it != end_it; ++it) {
+            std::allocator_traits<allocator_type>::destroy(allocator, it.ptr_);
+        }
+    }
 };
 
 // TODO: bool specialization
