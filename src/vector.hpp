@@ -282,7 +282,7 @@ class Vector {
             if (allocator_ == other.allocator_) {
                 sz_ = other.sz_;
                 cp_ = other.cp_;
-                data = other.data_;
+                data_ = other.data_;
                 other.sz_ = 0;
                 other.cp_ = 0;
                 other.data_ = nullptr;
@@ -318,6 +318,54 @@ class Vector {
         return *this;
     }
 
+
+    constexpr allocator_type get_allocator() const noexcept {
+        return allocator_;
+    }
+
+
+    constexpr reference at(size_type pos) {
+        if (pos >= sz_) throw std::out_of_range();
+        return data_[pos];
+    }
+
+    constexpr const_reference at(size_type pos) const {
+        if (pos >= sz_) throw std::out_of_range();
+        return data_[pos];
+    }
+
+    constexpr reference operator[](size_type pos) noexcept {
+        return data_[pos];
+    }
+
+    constexpr const_reference operator[](size_type pos) const noexcept {
+        return data_[pos];
+    }
+
+    constexpr reference front(size_type pos) noexcept {
+        return data_[0];
+    }
+
+    constexpr const_reference front(size_type pos) const noexcept {
+        return data_[0];
+    }
+
+    constexpr reference back(size_type pos) noexcept {
+        return data_[sz_ - 1];
+    }
+
+    constexpr const_reference back(size_type pos) const noexcept {
+        return data_[sz_ - 1];
+    }
+
+    constexpr pointer data() noexcept {
+        return data_;
+    }
+    
+    constexpr const_pointer data() const noexcept {
+        return data_;
+    }
+
     private:
 
     allocator_type allocator_;
@@ -329,4 +377,4 @@ class Vector {
 // TODO: bool specialization
 
 
-} //namespace myvector
+} // namespace myvector

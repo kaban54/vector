@@ -1,10 +1,11 @@
-// #include "vector.hpp"
-#include<memory>
-#include<vector>
+#include "vector.hpp"
+#include <memory>
+#include <vector>
 
 int main() {
+    std::vector<int> a({1, 2, 3});
 
-    std::vector<int> a;
-    a = std::vector<int>({1, 2, 3});
+    a[2];
+    a.at(1);
     return 0;
 }
