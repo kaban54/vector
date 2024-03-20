@@ -1,8 +1,11 @@
 #include <memory>
 #include <iterator>
 #include <type_traits>
+#include "forward.hpp"
 
 namespace myvector {
+
+using myforward::forward;
 
 
 template<typename T, typename Allocator = std::allocator<T>>
@@ -510,9 +513,16 @@ class Vector {
         }
     }
 
-    static void Destroy(allocator_type allocator, iterator it, iterator end_it,) {
+    static void Destroy(allocator_type allocator, iterator it, iterator end_it) {
         for(;it != end_it; ++it) {
             std::allocator_traits<allocator_type>::destroy(allocator, it.ptr_);
+        }
+    }
+
+    template<typename... Args>
+    static void Fill(allocator_type allocator, iterator it, iterator end_it, Args&&... args) {
+        for(;it != end_it; ++it) {
+            std::allocator_traits<allocator_type>::construct(allocator, it.ptr_, forward<Args>(args)...);
         }
     }
 };
