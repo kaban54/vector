@@ -10,7 +10,6 @@ int main() {
     a.insert(a.begin(), 0);
     std::cout << a[0] << a[1] << a[2];
 
-
     auto r = std::make_reverse_iterator(a.end());
 
     std::cout << '\n' << *r;

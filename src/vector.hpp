@@ -442,47 +442,17 @@ class Vector {
     }
 
     constexpr iterator insert(const_iterator position, const_reference val) {
-        difference_type dif = position - cbegin();
-        if (sz_ == cp_) {
-            reserve(cp_ == 0 ? 2 : cp_ * 2);
-        }
-        iterator pos = begin() + dif;
-
-        if (pos != end()) {
-            std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
-            for (auto it = end() - 1; it != pos, --it) {
-                *it = std::move(*(it - 1));
-            }
-        }
-        std::allocator_traits<allocator_type>::construct(allocator_, pos().ptr_, val);
-        sz_++;
-        return pos;
+        return emplace(position, val);
     }
 
     constexpr iterator insert(const_iterator position, T&& val) {
-        difference_type dif = position - cbegin();
-        if (sz_ == cp_) {
-            reserve(cp_ == 0 ? 2 : cp_ * 2);
-        }
-        iterator pos = begin() + dif;
-
-        if (pos != end()) {
-            std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
-            for (auto it = end() - 1; it != pos, --it) {
-                *it = std::move(*(it - 1));
-            }
-        }
-        std::allocator_traits<allocator_type>::construct(allocator_, pos().ptr_, std::move(val));
-        sz_++;
-        return pos;
+        return emplace(position, std::move(val));
     }
 
     constexpr iterator insert(const_iterator position, size_type count, const_reference val) {
         difference_type dif = position - cbegin();
         if (sz_ + count > cp_) {
-            size_type new_cap = (cp_ == 0 ? 2 : cp_ * 2);
-            if (sz_ + count > new_cap) new_cap = sz_ + count;
-            reserve(new_cap);
+            reserve( (sz_ + count > cp_ * 2) ? (sz_ + count) : (cp_ * 2) );
         }
         iterator pos = begin() + dif;
 
@@ -492,11 +462,79 @@ class Vector {
                 *it = std::move(*(it - count));
             }
         }
-        std::allocator_traits<allocator_type>::construct(allocator_, pos().ptr_, val);
+        Fill(allocator_, pos(), pos() + count, val);
         sz_ += count;
         return pos;
     }
 
+    template<typename... Args>
+    constexpr iterator emplace(const_iterator position, Args&&... args) {
+        difference_type dif = position - cbegin();
+        if (sz_ == cp_) {
+            reserve(cp_ == 0 ? 2 : cp_ * 2);
+        }
+        iterator pos = begin() + dif;
+
+        if (pos != end()) {
+            std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
+            for (auto it = end() - 1; it != pos, --it) {
+                *it = std::move(*(it - 1));
+            }
+        }
+        std::allocator_traits<allocator_type>::construct(allocator_, pos().ptr_, forward<Args>(args)...);
+        sz_++;
+        return pos;
+    }
+
+    constexpr iterator erase(const_iterator position) {
+        iterator pos = position;
+        MoveAssign(pos() + 1, end(), pos());
+        --sz_;
+        std::allocator_traits<allocator_type>::destroy(allocator, end());
+        return pos;
+    }
+
+    constexpr void push_back(const_reference val) {
+        emplace_back(val);
+    }
+
+    constexpr void push_back(T&& val) {
+        emplace_back(std::move(val));
+    }
+
+    template<typename... Args>
+    constexpr reference emplace_back(Args&&... args) {
+        return *emplace(end(), forward<Args>(args)...);
+    }
+
+    constexpr void pop_back() noexcept {
+        --sz_;
+        std::allocator_traits<allocator_type>::destroy(allocator, end());
+    }
+
+    constexpr void resize(size_type count) {
+        if (count > max_size) throw std::length_error();
+        if (count < sz_) {
+            Destroy(allocator_, begin() + count, end());
+        }
+        else {
+            reserve(count);
+            Fill(allocator_, end(), begin() + count);
+        }
+        sz_ = count;
+    }
+
+    constexpr void resize(size_type count, const_reference val) {
+        if (count > max_size) throw std::length_error();
+        if (count < sz_) {
+            Destroy(allocator_, begin() + count, end());
+        }
+        else {
+            reserve(count);
+            Fill(allocator_, end(), begin() + count, val);
+        }
+        sz_ = count;
+    }
 
     private:
 
@@ -528,6 +566,12 @@ class Vector {
     static void Fill(allocator_type allocator, iterator it, iterator end_it, Args&&... args) {
         for(;it != end_it; ++it) {
             std::allocator_traits<allocator_type>::construct(allocator, it.ptr_, forward<Args>(args)...);
+        }
+    }
+
+    static void MoveAssign(iterator src, iterator src_end, iterator dst) {
+        for(;src != src_end; ++src) {
+            *(dst++) = std::move(*src);
         }
     }
 };
