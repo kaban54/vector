@@ -429,8 +429,54 @@ class Vector {
     }
 
 
-    
 
+    constexpr iterator begin() noexcept {
+        return iterator(data_);
+    }
+
+    constexpr const_iterator begin() const noexcept {
+        return const_iterator(data_);
+    }
+
+    constexpr const_iterator cbegin() const noexcept {
+        return const_iterator(data_);
+    }
+
+    constexpr iterator end() noexcept {
+        return iterator(data_ + sz_);
+    }
+
+    constexpr const_iterator end() const noexcept {
+        return const_iterator(data_ + sz_);
+    }
+
+    constexpr const_iterator cend() const noexcept {
+        return const_iterator(data_ + sz_);
+    }
+
+    constexpr reverse_iterator rbegin() noexcept {
+        return reverse_iterator(data_ + sz_ - 1);
+    }
+
+    constexpr const_reverse_iterator rbegin() const noexcept {
+        return const_reverse_iterator(data_ + sz_ - 1);
+    }
+
+    constexpr const_reverse_iterator crbegin() const noexcept {
+        return const_reverse_iterator(data_ + sz_ - 1);
+    }
+
+    constexpr reverse_iterator rend() noexcept {
+        return reverse_iterator(data_ - 1);
+    }
+
+    constexpr const_reverse_iterator rend() const noexcept {
+        return const_reverse_iterator(data_ - 1);
+    }
+
+    constexpr const_reverse_iterator crend() const noexcept {
+        return const_reverse_iterator(data_ - 1);
+    }
 
 
     constexpr void clear() noexcept {
