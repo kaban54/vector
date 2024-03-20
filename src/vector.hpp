@@ -14,13 +14,15 @@ class Vector {
     using difference_type = std::ptrdiff_t;
     using reference = value_type&;
     using const_reference = const value_type&;
-    using pointer = std::allocator_traits<Allocator>::pointer;
-    using const_pointer = std::allocator_traits<Allocator>::const_pointer;
+    using pointer = std::allocator_traits<allocator_type>::pointer;
+    using const_pointer = std::allocator_traits<allocator_type>::const_pointer;
 
     private:
 
     class VecIter : public std::iterator<std::contiguous_iterator_tag, value_type> {
         public:
+
+        VecIter(): ptr_(nullptr) {}
 
         VecIter(pointer ptr): ptr_(ptr) {}
 
@@ -109,74 +111,211 @@ class Vector {
     public:
 
     using iterator = VecIter;
-    using const_iterator = std::basic_const_iterator<iterator>;
+    // using const_iterator = std::basic_const_iterator<iterator>;
     using reverse_iterator = std::reverse_iterator<iterator>;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    // using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    constexpr Vector() noexcept(noexcept(Allocator())):
+    constexpr Vector() noexcept(noexcept(allocator_type())):
         allocator_(),
         sz_(0),
         cp_(0),
         data_(nullptr) {}
 
-    constexpr explicit Vector(const Allocator& alloc) noexcept :
+    constexpr explicit Vector(const allocator_type& alloc) noexcept :
         allocator_(alloc),
         sz_(0),
         cp_(0),
         data_(nullptr) {}
 
-    constexpr Vector(size_type count, const T& value, const Allocator& alloc = Allocator()):
+    constexpr Vector(size_type count, const T& value, const allocator_type& alloc = allocator_type()):
         allocator_(alloc),
         sz_(count),
         cp_(count),
         data_(nullptr)
         {
-            data_ = std::allocator_traits<Allocator>::allocate(allocator_, cp_);
+            data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
             for (size_type idx = 0; idx < sz_; ++idx) {
-                std::allocator_traits<Allocator>::construct(allocator_, data_ + idx, value);
+                std::allocator_traits<allocator_type>::construct(allocator_, data_ + idx, value);
             }
         }
 
-    constexpr explicit Vector(size_type count, const Allocator& alloc = Allocator()):
+    constexpr explicit Vector(size_type count, const allocator_type& alloc = allocator_type()):
         allocator_(alloc),
         sz_(count),
         cp_(count),
         data_(nullptr)
         {
-            data_ = std::allocator_traits<Allocator>::allocate(allocator_, cp_);
+            data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
             for (size_type idx = 0; idx < sz_; ++idx) {
-                std::allocator_traits<Allocator>::construct(allocator_, data_ + idx);
+                std::allocator_traits<allocator_type>::construct(allocator_, data_ + idx);
             }
         }
 
-    // template< class InputIt >
-    // constexpr vector( InputIt first, InputIt last,
-    //               const Allocator& alloc = Allocator() );
+    // template<class InputIt>
+    // constexpr Vector(InputIt first, InputIt last, const allocator_type& alloc = allocator_type());
 
-    constexpr Vector(const vector& other):
-        allocator_(alloc),
-        sz_(count),
-        cp_(count),
+    constexpr Vector(const Vector& other):
+        allocator_(std::allocator_traits<allocator_type>::select_on_container_copy_construction(other.allocator_)),
+        sz_(other.sz_),
+        cp_(other.sz_),
         data_(nullptr)
         {
-
+            data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
+            for (size_type idx = 0; idx < sz_; ++idx) {
+                std::allocator_traits<allocator_type>::construct(allocator_, data_ + idx, other.data_[idx]);
+            }
         }
 
-    constexpr Vector( const Vector& other, const Allocator& alloc );
+    constexpr Vector(const Vector& other, const allocator_type& alloc):
+        allocator_(alloc),
+        sz_(other.sz_),
+        cp_(other.sz_),
+        data_(nullptr)
+        {
+            data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
+            for (size_type idx = 0; idx < sz_; ++idx) {
+                std::allocator_traits<allocator_type>::construct(allocator_, data_ + idx, other.data_[idx]);
+            }
+        }
 
-    constexpr Vector( Vector&& other ) noexcept;
+    constexpr Vector(Vector&& other) noexcept:
+        allocator_(std::move(other.allocator_)),
+        sz_(other.sz_),
+        cp_(other.cp_),
+        data_(other.data_)
+        {
+            other.cp_ = 0;
+            other.sz_ = 0;
+            other.data_ = nullptr;
+        }
 
-    constexpr Vector( Vector&& other, const Allocator& alloc );
+    constexpr Vector(Vector&& other, const allocator_type& alloc):
+        allocator_(alloc),
+        sz_(other.sz_),
+        cp_(other.cp_),
+        data_(nullptr)
+        {
+            if (allocator_ == other.allocator_) {
+                data_ = other.data_;
+                other.cp_ = 0;
+                other.sz_ = 0;
+                other.data_ = nullptr;
+            }
+            else {
+                data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
+                for (size_type idx = 0; idx < sz_; ++idx) {
+                    std::allocator_traits<allocator_type>::construct(allocator_, data_ + idx,
+                                                                     std::move(other.data_[idx]));
+                }
+            }
+        }
 
-    constexpr Vector( std::initializer_list<T> init, const Allocator& alloc = Allocator());
+    // constexpr Vector( std::initializer_list<T> init, const allocator_type& alloc = allocator_type());
     
     ~Vector() {
         for (size_type idx = 0; idx < sz_; ++idx) {
-            std::allocator_traits<Allocator>::destroy(allocator_, data_ + idx);
+            std::allocator_traits<allocator_type>::destroy(allocator_, data_ + idx);
         }
         if (data_ != nullptr) {
-            std::allocator_traits<Allocator>::deallocate(allocator_, data, cp_);
+            std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
         }
+    }
+
+
+    constexpr Vector& operator=(const Vector& other) {
+        allocator_type old_allocator = allocator_;
+        if (std::allocator_traits<allocator_type>::propagate_on_container_copy_assignment::value) {
+            allocator_ = other.allocator_;
+        }
+        if (allocator_ != old_allocator || other.sz_ > cp_) {
+            for (size_type idx = 0; idx < sz_; ++idx) {
+                std::allocator_traits<allocator_type>::destroy(old_allocator, data_ + idx);
+            }
+            if (data_ != nullptr) {
+                std::allocator_traits<allocator_type>::deallocate(old_allocator, data_, cp_);
+            }
+
+            cp_ = other.sz_;
+            sz_ = other.sz_;
+
+            data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
+            for (size_type idx = 0; idx < sz_; ++idx) {
+                std::allocator_traits<allocator_type>::construct(allocator_, data_ + idx, other.data_[idx]);
+            }
+        }
+        else {
+            size_type minsz = sz_ < other.sz_ ? sz_ : other.sz_;
+            for (size_type idx = 0; idx < minsz; ++idx) {
+                data_[idx] = other.data_[idx];
+            }
+            if (sz_ < other.sz_) {
+                for (size_type idx = sz_; idx < other.sz_; ++idx) {
+                    std::allocator_traits<allocator_type>::construct(allocator_, data_ + idx, other.data_[idx]);
+                }
+            }
+            else {
+                for (size_type idx = other.sz_; idx < sz_; ++idx) {
+                    std::allocator_traits<allocator_type>::destroy(allocator_, data_ + idx);
+                }
+            }
+        
+            sz_ = other.sz_;
+        }
+
+        return *this;
+    }
+
+    constexpr Vector& operator=(Vector&& other)
+    noexcept(std::allocator_traits<allocator_type>::propagate_on_container_move_assignment::value /* TODO */ ) {
+        allocator_type old_allocator = allocator_;
+        if (std::allocator_traits<allocator_type>::propagate_on_container_move_assignment::value) {
+            allocator_ = other.allocator_;
+        }
+        if (allocator_ == other.allocator_ || cp_ < other.sz_) {
+            for (size_type idx = 0; idx < sz_; ++idx) {
+                std::allocator_traits<allocator_type>::destroy(old_allocator, data_ + idx);
+            }
+            if (data_ != nullptr) {
+                std::allocator_traits<allocator_type>::deallocate(old_allocator, data_, cp_);
+            }
+
+            if (allocator_ == other.allocator_) {
+                sz_ = other.sz_;
+                cp_ = other.cp_;
+                data = other.data_;
+                other.sz_ = 0;
+                other.cp_ = 0;
+                other.data_ = nullptr;
+            }
+            else {
+                data_ = std::allocator_traits<allocator_type>::allocate(allocator_, other.sz_);
+                for (size_type idx = 0; idx < other.sz_; ++idx) {
+                    std::allocator_traits<allocator_type>::construct(allocator_, data_ + idx,
+                                                                     std::move(other.data_[idx]));
+                }
+            }
+        }
+        else {
+            size_type minsz = sz_ < other.sz_ ? sz_ : other.sz_;
+            for (size_type idx = 0; idx < minsz; ++idx) {
+                data_[idx] = std::move(other.data_[idx]);
+            }
+            if (sz_ < other.sz_) {
+                for (size_type idx = sz_; idx < other.sz_; ++idx) {
+                    std::allocator_traits<allocator_type>::construct(allocator_, data_ + idx,
+                                                                     std::move(other.data_[idx]));
+                }
+            }
+            else {
+                for (size_type idx = other.sz_; idx < sz_; ++idx) {
+                    std::allocator_traits<allocator_type>::destroy(allocator_, data_ + idx);
+                }
+            }
+        
+            sz_ = other.sz_;
+        }
+
+        return *this;
     }
 
     private:
