@@ -1,5 +1,6 @@
 #include <memory>
 #include <iterator>
+#include <type_traits>
 
 namespace myvector {
 
@@ -19,101 +20,106 @@ class Vector {
 
     private:
 
-    class VecIter : public std::iterator<std::contiguous_iterator_tag, value_type> {
-        public:
+    template<bool Const>
+    struct VecIter : public std::iterator<std::contiguous_iterator_tag, value_type> {
+        using ptr_t = typename std::conditional_t<Const, const_pointer, pointer>;
+        using ref_t = typename std::conditional_t<Const, const_reference, reference>;
 
-        VecIter(): ptr_(nullptr) {}
+        constexpr VecIter() noexcept: ptr_(nullptr) {}
 
-        VecIter(pointer ptr): ptr_(ptr) {}
+        constexpr VecIter(pointer ptr) noexcept: ptr_(ptr) {}
 
-        VecIter(const VecIter& other): ptr_(other.ptr_) {}
+        constexpr VecIter(const VecIter& other) noexcept: ptr_(other.ptr_) {}
 
-        VecIter& operator=(const VecIter& other) {
+        constexpr VecIter& operator=(const VecIter& other) noexcept {
             ptr_ = other.ptr_;
         }
 
-        reference operator*() const {
+        constexpr ref_t operator*() const noexcept {
             return *ptr_;
         }
 
-        reference operator[](size_type idx) {
+        constexpr ptr_t operator->() const noexcept {
+            return ptr_;
+        }
+
+        constexpr ref_t operator[](size_type idx) noexcept {
             return ptr_[idx];
         }
 
-        VecIter& operator++() {
+        constexpr VecIter& operator++() noexcept {
             ++ptr_;
             return *this;
         }
 
-        VecIter operator++(int) {
+        constexpr VecIter operator++(int) noexcept {
             return VecIter(ptr_++);
         }
 
-        VecIter& operator--() {
+        constexpr VecIter& operator--() noexcept {
             --ptr_;
             return *this;
         }
 
-        VecIter operator--(int) {
+        constexpr VecIter operator--(int) noexcept {
             return VecIter(ptr_--);
         }
 
-        VecIter operator+(int n) const {
+        constexpr VecIter operator+(int n) const noexcept {
             return VecIter(ptr_ + n);
         }
 
-        VecIter operator-(int n) const {
+        constexpr VecIter operator-(int n) const noexcept {
             return VecIter(ptr_ - n);
         }
 
-        VecIter& operator+=(int n) {
+        constexpr VecIter& operator+=(int n) noexcept {
             ptr_ += n;
             return *this;
         }
 
-        VecIter& operator-=(int n) {
+        constexpr VecIter& operator-=(int n) noexcept {
             ptr_ -= n;
             return *this;
         }
 
-        difference_type operator-(const VecIter& other) const {
+        constexpr difference_type operator-(const VecIter& other) const noexcept {
             return ptr_ - other.ptr_;
         }
 
-        bool operator==(const VecIter& other) const {
+        constexpr bool operator==(const VecIter& other) const noexcept {
             return ptr_ == other.ptr_;
         }
 
-        bool operator!=(const VecIter& other) const {
+        constexpr bool operator!=(const VecIter& other) const noexcept {
             return ptr_ != other.ptr_;
         }
         
-        bool operator<=(const VecIter& other) const {
+        constexpr bool operator<=(const VecIter& other) const noexcept {
             return ptr_ <= other.ptr_;
         }
         
-        bool operator>=(const VecIter& other) const {
+        constexpr bool operator>=(const VecIter& other) const noexcept {
             return ptr_ >= other.ptr_;
         }
 
-        bool operator<(const VecIter& other) const {
+        constexpr bool operator<(const VecIter& other) const noexcept {
             return ptr_ < other.ptr_;
         }
         
-        bool operator>(const VecIter& other) const {
+        constexpr bool operator>(const VecIter& other) const noexcept {
             return ptr_ > other.ptr_;
         }
 
-        private:
         pointer ptr_;
     };
 
     public:
 
-    using iterator = VecIter;
-    // using const_iterator = std::basic_const_iterator<iterator>;
+    using iterator = VecIter<false>;
+    using const_iterator = VecIter<true>;
     using reverse_iterator = std::reverse_iterator<iterator>;
-    // using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
     constexpr Vector() noexcept(noexcept(allocator_type())):
         allocator_(),
@@ -421,6 +427,19 @@ class Vector {
         data_ = new_data;
         cp_ = sz_;
     }
+
+
+    
+
+
+
+    constexpr void clear() noexcept {
+        for (size_type idx = 0; idx < sz_; ++idx) {
+            std::allocator_traits<allocator_type>::destroy(allocator_, data_[idx]);
+        }
+        sz_ = 0;
+    }
+
 
 
     private:
