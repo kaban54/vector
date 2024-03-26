@@ -23,6 +23,8 @@ void Print(int x) {
 int main() {
     
     Vector<int> vec1(8);
+    
+    std::vector<int> vv(vec1.begin(), vec1.end());
 
     std::for_each(vec1.begin(), vec1.end(), Modify);
     std::for_each(vec1.begin(), vec1.end(), Print);

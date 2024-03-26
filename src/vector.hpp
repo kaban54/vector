@@ -159,8 +159,20 @@ class Vector {
             Fill(allocator_, begin(), begin() + sz_);
         }
 
-    // template<class InputIt>
-    // constexpr Vector(InputIt first, InputIt last, const allocator_type& alloc = allocator_type());
+    
+
+    template<typename InputIt, type = std::_RequireInputIter<InputIt>>
+    constexpr Vector(InputIt first, InputIt last, const allocator_type& alloc = allocator_type()):
+        allocator_(alloc),
+        sz_(std::distance(first, last)),
+        cp_(sz_),
+        data_(nullptr) {
+            data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
+            iterator dst(data_);
+            for(;first != last; ++first) {
+                std::allocator_traits<allocator_type>::construct(allocator, (dst++).ptr_, *first);
+            }
+        }
 
     constexpr Vector(const Vector& other):
         allocator_(std::allocator_traits<allocator_type>::select_on_container_copy_construction(other.allocator_)),
