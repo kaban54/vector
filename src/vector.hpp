@@ -20,8 +20,8 @@ class Vector {
     using difference_type = std::ptrdiff_t;
     using reference = value_type&;
     using const_reference = const value_type&;
-    using pointer = std::allocator_traits<allocator_type>::pointer;
-    using const_pointer = std::allocator_traits<allocator_type>::const_pointer;
+    using pointer = typename std::allocator_traits<allocator_type>::pointer;
+    using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
 
     private:
 
@@ -38,6 +38,7 @@ class Vector {
 
         constexpr VecIter& operator=(const VecIter& other) noexcept {
             ptr_ = other.ptr_;
+            return *this;
         }
 
         constexpr ref_t operator*() const noexcept {
@@ -294,12 +295,12 @@ class Vector {
     }
 
     constexpr reference at(size_type pos) {
-        if (pos >= sz_) throw std::out_of_range();
+        if (pos >= sz_) throw std::out_of_range("");
         return data_[pos];
     }
 
     constexpr const_reference at(size_type pos) const {
-        if (pos >= sz_) throw std::out_of_range();
+        if (pos >= sz_) throw std::out_of_range("");
         return data_[pos];
     }
 
@@ -350,11 +351,9 @@ class Vector {
 
     constexpr void reserve(size_type new_cap) {
         if (new_cap <= cp_) return;
-        if (new_cap >= max_size()) throw std::length_error();
+        if (new_cap >= max_size()) throw std::length_error("");
 
         pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, new_cap);
-
-        
 
         iterator current(new_data);
         try {
@@ -534,7 +533,7 @@ class Vector {
     }
 
     constexpr void resize(size_type count) {
-        if (count > max_size) throw std::length_error();
+        if (count > max_size()) throw std::length_error("");
         if (count < sz_) {
             Destroy(allocator_, begin() + count, end());
         }
@@ -546,7 +545,7 @@ class Vector {
     }
 
     constexpr void resize(size_type count, const_reference val) {
-        if (count > max_size) throw std::length_error();
+        if (count > max_size()) throw std::length_error("");
         if (count < sz_) {
             Destroy(allocator_, begin() + count, end());
         }
