@@ -23,8 +23,6 @@ void Print(int x) {
 int main() {
     
     Vector<int> vec1(8);
-    
-    std::vector<int> vv(vec1.begin(), vec1.end());
 
     std::for_each(vec1.begin(), vec1.end(), Modify);
     std::for_each(vec1.begin(), vec1.end(), Print);
@@ -59,8 +57,6 @@ int main() {
     d1[6] = 6.123;
 
     Vector<double> d2(10);
-
-    if (d1[0] == 0.002) std::cout << "E\n";
 
     std::copy_if(d1.begin(), d1.end(), d2.begin(), 
                  [x](double arg) {std::cout << "[ " << arg << "\t" << (int)arg << "\t" << arg - (int)arg << " ]\n";

@@ -161,7 +161,7 @@ class Vector {
 
     
 
-    template<typename InputIt, type = std::_RequireInputIter<InputIt>>
+    template<typename InputIt, typename = std::_RequireInputIter<InputIt>>
     constexpr Vector(InputIt first, InputIt last, const allocator_type& alloc = allocator_type()):
         allocator_(alloc),
         sz_(std::distance(first, last)),
@@ -170,7 +170,7 @@ class Vector {
             data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
             iterator dst(data_);
             for(;first != last; ++first) {
-                std::allocator_traits<allocator_type>::construct(allocator, (dst++).ptr_, *first);
+                std::allocator_traits<allocator_type>::construct(allocator_, (dst++).ptr_, *first);
             }
         }
 
@@ -263,7 +263,8 @@ class Vector {
     }
 
     constexpr Vector& operator=(Vector&& other)
-    noexcept(std::allocator_traits<allocator_type>::propagate_on_container_move_assignment::value /* TODO */ ) {
+    noexcept(std::allocator_traits<Allocator>::propagate_on_container_move_assignment::value ||
+             std::allocator_traits<Allocator>::is_always_equal::value) {
         allocator_type old_allocator = allocator_;
         if (std::allocator_traits<allocator_type>::propagate_on_container_move_assignment::value) {
             allocator_ = other.allocator_;
@@ -363,23 +364,29 @@ class Vector {
 
     constexpr void reserve(size_type new_cap) {
         if (new_cap <= cp_) return;
-        if (new_cap >= max_size()) throw std::length_error("");
+        if (new_cap >= max_size()) throw std::length_error("Vector::reserve");
 
         pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, new_cap);
 
-        iterator current(new_data);
-        try {
-            for(const_iterator it = cbegin(); it != cend(); ++it) {
-                std::allocator_traits<allocator_type>::construct(allocator_, current.ptr_, *it);
-                ++current;
-            }
+        if (std::is_nothrow_move_constructible_v<value_type> || 
+            std::is_same_v<std::__is_copy_insertable<allocator_type>, std::false_type>) {
+                Move(allocator_, begin(), end(), iterator(new_data));
         }
-        catch(...) {
-            for(iterator it(new_data); it != current; ++it) {
-                std::allocator_traits<allocator_type>::destroy(allocator_, it.ptr_);
+        else {
+            iterator current(new_data);
+            try {
+                for(const_iterator it = cbegin(); it != cend(); ++it) {
+                    std::allocator_traits<allocator_type>::construct(allocator_, current.ptr_, *it);
+                    ++current;
+                }
             }
-            std::allocator_traits<allocator_type>::deallocate(allocator_, new_data, new_cap);
-            throw;
+            catch(...) {
+                for(iterator it(new_data); it != current; ++it) {
+                    std::allocator_traits<allocator_type>::destroy(allocator_, it.ptr_);
+                }
+                std::allocator_traits<allocator_type>::deallocate(allocator_, new_data, new_cap);
+                throw;
+            }
         }
 
         Destroy(allocator_, begin(), end());
