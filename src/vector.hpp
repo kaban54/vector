@@ -414,7 +414,7 @@ class Vector {
 
         pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, sz_);
         Move(allocator_, begin(), end(), iterator(new_data));
-        clear();
+        Destroy(allocator_, begin(), end());
         if (data_ != nullptr) {
             std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
         }
@@ -422,8 +422,6 @@ class Vector {
         data_ = new_data;
         cp_ = sz_;
     }
-
-
 
     constexpr iterator begin() noexcept {
         return iterator(data_);
