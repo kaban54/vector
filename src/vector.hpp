@@ -541,7 +541,7 @@ class Vector {
 
     template<typename... Args>
     constexpr reference emplace_back(Args&&... args) {
-        return *emplace(end(), forward<Args>(args)...);
+        return *emplace(cend(), forward<Args>(args)...);
     }
 
     constexpr void pop_back() noexcept {

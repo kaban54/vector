@@ -3,11 +3,19 @@
 #include <vector>
 #include <iostream>
 #include <iterator>
-#include<algorithm>
+#include <algorithm>
 #include <cmath>
+#include <random>
 
 
 using myvector::Vector;
+
+
+void Fill(Vector<int>& vec, size_t num) {
+    for (; num > 0; --num) {
+        vec.push_back(std::rand() % 1000);
+    }
+}
 
 
 void Modify(int& x) {
@@ -16,35 +24,50 @@ void Modify(int& x) {
 }
 
 void Print(int x) {
-    std::cout << x << '\n';
+    std::cout << x << '\t';
 }
 
-
-int main() {
-    
+void TestForEach() {
     Vector<int> vec1(8);
-
     std::for_each(vec1.begin(), vec1.end(), Modify);
     std::for_each(vec1.begin(), vec1.end(), Print);
+    std::cout << '\n';
+}
 
+void TestSort() {
+    Vector<int> vec;
+    Fill(vec, 6);
+    std::cout << "\nBefore sorting:\n";
+    std::for_each(vec.begin(), vec.end(), Print);
+    std::sort(vec.begin(), vec.end());
+    std::cout << "\nAfter sorting:\n";
+    std::for_each(vec.begin(), vec.end(), Print);
+    std::cout << '\n';
+}
 
-    std::sort(vec1.begin(), vec1.end());
-    std::cout << "\n\n";
-
-    for (auto elem : vec1) {
-        std::cout << elem << "\n";
+void TestForAuto() {
+    Vector<int> vec;
+    Fill(vec, 6);
+    for (auto elem : vec) {
+        std::cout << elem << "\t";
     }
+    std::cout << '\n';
+}
 
-
-    Vector<int> vec2(8);
-    
-
+void TestCopy() {
+    Vector<int> vec1;
+    Fill(vec1, 6);
+    Vector<int> vec2(6);
+    std::cout << "Vec1:\n";
+    std::for_each(vec1.begin(), vec1.end(), Print);
+    std::cout << "\n";
     std::copy(vec1.begin(), vec1.end(), vec2.begin());
-
-    std::cout << "\n\n";
+    std::cout << "Copy:\n";
     std::for_each(vec2.begin(), vec2.end(), Print);
+    std::cout << "\n";
+}
 
-
+void TestCopyIf() {
     double x = 123.666;
 
     Vector<double> d1(10);
@@ -59,12 +82,21 @@ int main() {
     Vector<double> d2(10);
 
     std::copy_if(d1.begin(), d1.end(), d2.begin(), 
-                 [x](double arg) {std::cout << "[ " << arg << "\t" << (int)arg << "\t" << arg - (int)arg << " ]\n";
-                                  return fabs((arg - (int)arg) - 0.666) < 0.001;});
+                 [x](double arg) {return fabs((arg - (int)arg) - 0.666) < 0.001;});
 
 
-    std::cout << "\n\n";
-    std::for_each(d2.begin(), d2.end(), [](double y) {std::cout << y << "\n";});
+    std::cout << "\n";
+    std::for_each(d2.begin(), d2.end(), [](double y) {std::cout << y << "\t";});
+    std::cout << "\n";
+}
+
+int main() {
+    TestForEach();
+    TestSort();
+    TestCopy();
+    TestCopyIf();
+    TestForAuto();
+
 
     return 0;
 }
