@@ -156,7 +156,7 @@ class Vector {
         data_(nullptr)
         {
             data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
-            Fill(allocator_, begin(), begin() + sz_);
+            Fill(allocator_, begin(), end());
         }
 
     
@@ -308,12 +308,12 @@ class Vector {
     }
 
     constexpr reference at(size_type pos) {
-        if (pos >= sz_) throw std::out_of_range("");
+        if (pos >= sz_) throw std::out_of_range("Vector::at");
         return data_[pos];
     }
 
     constexpr const_reference at(size_type pos) const {
-        if (pos >= sz_) throw std::out_of_range("");
+        if (pos >= sz_) throw std::out_of_range("Vector::at");
         return data_[pos];
     }
 
@@ -509,7 +509,7 @@ class Vector {
         if (sz_ == cp_) {
             reserve(cp_ == 0 ? 2 : cp_ * 2);
         }
-        iterator pos = begin() + dif;
+        iterator pos = begin() + (int)dif;
 
         if (pos != end()) {
             std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
@@ -550,7 +550,7 @@ class Vector {
     }
 
     constexpr void resize(size_type count) {
-        if (count > max_size()) throw std::length_error("");
+        if (count > max_size()) throw std::length_error("Vector::resize");
         if (count < sz_) {
             Destroy(allocator_, begin() + count, end());
         }
@@ -562,7 +562,7 @@ class Vector {
     }
 
     constexpr void resize(size_type count, const_reference val) {
-        if (count > max_size()) throw std::length_error("");
+        if (count > max_size()) throw std::length_error("Vector::resize");
         if (count < sz_) {
             Destroy(allocator_, begin() + count, end());
         }
