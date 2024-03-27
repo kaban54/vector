@@ -93,13 +93,21 @@ void TestCopyIf() {
     std::cout << "\n";
 }
 
+void TestInitList() {
+    Vector<double> d({2.3, 2112, 1.32, -0.22});
+
+    std::cout << "Initializer list test:\n";
+    std::for_each(d.begin(), d.end(), [](double y) {std::cout << y << "\t";});
+    std::cout << "\n";
+}
+
 int main() {
     TestForEach();
     TestSort();
     TestCopy();
     TestCopyIf();
     TestForAuto();
-
+    TestInitList();
 
     return 0;
 }

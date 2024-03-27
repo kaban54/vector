@@ -4,6 +4,7 @@
 #include <utility>
 #include "forward.hpp"
 #include <iostream>
+#include <initializer_list>
 
 namespace myvector {
 
@@ -223,7 +224,18 @@ class Vector {
             }
         }
 
-    // constexpr Vector( std::initializer_list<T> init, const allocator_type& alloc = allocator_type());
+    constexpr Vector(std::initializer_list<T> init, const allocator_type& alloc = allocator_type()):
+        allocator_(alloc),
+        sz_(init.size()),
+        cp_(init.size()),
+        data_(nullptr)
+        {
+            data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
+            iterator dst(data_);
+            for(const_pointer src = init.begin(); src != init.end(); ++src) {
+                std::allocator_traits<allocator_type>::construct(allocator_, (dst++).ptr_, *src);
+            }
+        }
     
     ~Vector() {
         clear();
