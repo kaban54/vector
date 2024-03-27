@@ -27,7 +27,12 @@ class Vector {
     private:
 
     template<bool Const>
-    struct VecIter : public std::iterator<std::contiguous_iterator_tag, value_type> {
+    struct VecIter {
+        using iterator_category = typename std::contiguous_iterator_tag;
+        using value_type = T;
+        using difference_type = std::ptrdiff_t;
+        using pointer = typename std::allocator_traits<allocator_type>::pointer;
+        using reference = value_type&;
         using ptr_t = typename std::conditional_t<Const, const_pointer, pointer>;
         using ref_t = typename std::conditional_t<Const, const_reference, reference>;
 
@@ -314,6 +319,28 @@ class Vector {
         return *this;
     }
 
+    // constexpr vector& operator=(std::initializer_list<T> ilist) {
+    //     if (ilist.size() > cp_) {
+    //         if (data_ != nullptr) {
+    //             Destroy(allocator_, begin(), end());
+    //             std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
+    //         }
+    //         cp_ = ilist.size();
+    //         data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
+    //         sz_ = 0;
+    //     }
+    //     size_type minsz = sz_ < ilist.size() ? sz_ : ilist.size();
+    //     const_pointer src = ilist.begin();
+    //     for (size_type idx = 0; idx < minsz; ++idx) {
+    //         data_[idx] = *(src++);
+    //     }
+    //     if (sz_ < ilist.size()) {
+    //         for(; src != ilist.end(); ++src) {
+    //             std::allocator_traits<allocator_type>::construct(allocator_, , );
+    //         }
+    //     } 
+    //     else Destroy(allocator_, begin() + ilist.size(), end());
+    // }
 
     constexpr allocator_type get_allocator() const noexcept {
         return allocator_;
