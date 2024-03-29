@@ -10,11 +10,6 @@
 
 using myvector::Vector;
 
-
-// void TestMemberfuncs() {
-//     Vector<int> vec1;    
-// }
-
 void Fill(Vector<int>& vec, size_t num) {
     for (; num > 0; --num) {
         vec.push_back(std::rand() % 1000);

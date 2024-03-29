@@ -139,7 +139,7 @@ class Vector {
         cp_(0),
         data_(nullptr) {}
 
-    constexpr explicit Vector(const allocator_type& alloc) noexcept :
+    constexpr explicit Vector(const allocator_type& alloc) noexcept:
         allocator_(alloc),
         sz_(0),
         cp_(0),
@@ -164,8 +164,6 @@ class Vector {
             data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
             Fill(allocator_, begin(), end());
         }
-
-    
 
     template<typename InputIt, typename = std::_RequireInputIter<InputIt>>
     constexpr Vector(InputIt first, InputIt last, const allocator_type& alloc = allocator_type()):
