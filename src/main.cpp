@@ -31,6 +31,7 @@ void Print(int x) {
 }
 
 void TestForEach() {
+    std::cout << "\nTestForEach:\n";
     Vector<int> vec1(8);
     std::for_each(vec1.begin(), vec1.end(), Modify);
     std::for_each(vec1.begin(), vec1.end(), Print);
@@ -38,9 +39,10 @@ void TestForEach() {
 }
 
 void TestSort() {
+    std::cout << "\nTestSort:\n";
     Vector<int> vec;
     Fill(vec, 6);
-    std::cout << "\nBefore sorting:\n";
+    std::cout << "Before sorting:\n";
     std::for_each(vec.begin(), vec.end(), Print);
     std::sort(vec.begin(), vec.end());
     std::cout << "\nAfter sorting:\n";
@@ -49,6 +51,7 @@ void TestSort() {
 }
 
 void TestForAuto() {
+    std::cout << "\nTestForAuto:\n";
     Vector<int> vec;
     Fill(vec, 6);
     for (auto elem : vec) {
@@ -58,6 +61,7 @@ void TestForAuto() {
 }
 
 void TestCopy() {
+    std::cout << "\nTestCopy:\n";
     Vector<int> vec1;
     Fill(vec1, 6);
     Vector<int> vec2(6);
@@ -71,6 +75,7 @@ void TestCopy() {
 }
 
 void TestCopyIf() {
+    std::cout << "\nTestCopyIf:\n";
     double x = 123.666;
 
     Vector<double> d1(10);
@@ -87,8 +92,6 @@ void TestCopyIf() {
     std::copy_if(d1.begin(), d1.end(), d2.begin(), 
                  [x](double arg) {return fabs((arg - (int)arg) - 0.666) < 0.001;});
 
-
-    std::cout << "\n";
     std::for_each(d2.begin(), d2.end(), [](double y) {std::cout << y << "\t";});
     std::cout << "\n";
 }
@@ -96,9 +99,25 @@ void TestCopyIf() {
 void TestInitList() {
     Vector<double> d({2.3, 2112, 1.32, -0.22});
 
-    std::cout << "Initializer list test:\n";
+    std::cout << "\nTestInitList:\n";
     std::for_each(d.begin(), d.end(), [](double y) {std::cout << y << "\t";});
     std::cout << "\n";
+
+    d = {1, 2, .03333, 98.11, 45, 11111};
+    std::for_each(d.begin(), d.end(), [](double y) {std::cout << y << "\t";});
+    std::cout << "\n";
+}
+
+void TestReverseSort() {
+    std::cout << "\nTestReverseSort:\n";
+    Vector<int> vec;
+    Fill(vec, 6);
+    std::cout << "Before sorting:\n";
+    std::for_each(vec.begin(), vec.end(), Print);
+    std::sort(vec.rbegin(), vec.rend());
+    std::cout << "\nAfter sorting:\n";
+    std::for_each(vec.begin(), vec.end(), Print);
+    std::cout << '\n';
 }
 
 int main() {
@@ -108,6 +127,7 @@ int main() {
     TestCopyIf();
     TestForAuto();
     TestInitList();
+    TestReverseSort();
 
     return 0;
 }

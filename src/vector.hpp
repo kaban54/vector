@@ -319,28 +319,32 @@ class Vector {
         return *this;
     }
 
-    // constexpr vector& operator=(std::initializer_list<T> ilist) {
-    //     if (ilist.size() > cp_) {
-    //         if (data_ != nullptr) {
-    //             Destroy(allocator_, begin(), end());
-    //             std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
-    //         }
-    //         cp_ = ilist.size();
-    //         data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
-    //         sz_ = 0;
-    //     }
-    //     size_type minsz = sz_ < ilist.size() ? sz_ : ilist.size();
-    //     const_pointer src = ilist.begin();
-    //     for (size_type idx = 0; idx < minsz; ++idx) {
-    //         data_[idx] = *(src++);
-    //     }
-    //     if (sz_ < ilist.size()) {
-    //         for(; src != ilist.end(); ++src) {
-    //             std::allocator_traits<allocator_type>::construct(allocator_, , );
-    //         }
-    //     } 
-    //     else Destroy(allocator_, begin() + ilist.size(), end());
-    // }
+    constexpr Vector& operator=(std::initializer_list<T> ilist) {
+        if (ilist.size() > cp_) {
+            if (data_ != nullptr) {
+                Destroy(allocator_, begin(), end());
+                std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
+            }
+            cp_ = ilist.size();
+            data_ = std::allocator_traits<allocator_type>::allocate(allocator_, cp_);
+            sz_ = 0;
+        }
+        size_type minsz = sz_ < ilist.size() ? sz_ : ilist.size();
+        const_pointer src = ilist.begin();
+        iterator dst = begin();
+        for (; dst < begin() + (int)minsz; ++dst) {
+            *dst = *(src++);
+        }
+        if (sz_ < ilist.size()) {
+            for(; src != ilist.end(); ++src) {
+                std::allocator_traits<allocator_type>::construct(allocator_, (dst++).ptr_, *src);
+            }
+        } 
+        else Destroy(allocator_, begin() + (int)ilist.size(), end());
+
+        sz_ = ilist.size();
+        return *this;
+    }
 
     constexpr allocator_type get_allocator() const noexcept {
         return allocator_;
