@@ -45,12 +45,27 @@ void Test1(const std::string& name) {
 
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> duration = end - start;
-    std::cout << name << ": " << duration.count() << " s\n";
+    std::cout << "TestEmplaceBack: " << name << ":\t" << duration.count() << " s\n";
 }
 
+template <typename T>
+void Test2(const std::string& name) {
+    Vector<T> v;
+    auto start = std::chrono::steady_clock::now();
+
+    for (int i = 0; i < 50000; ++i) {
+        v.emplace(v.cbegin());
+    }
+
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << "TestEmplaceFront: " << name << ":\t" << duration.count() << " s\n";
+}
 
 int main() {
     Test1<TriviallyCopyable>("TriviallyCopyable");
     Test1<NotTriviallyCopyable>("NotTriviallyCopyable");
+    Test2<TriviallyCopyable>("TriviallyCopyable");
+    Test2<NotTriviallyCopyable>("NotTriviallyCopyable");
     return 0;
 }

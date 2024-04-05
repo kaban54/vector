@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <utility>
 #include "forward.hpp"
+#include "concept.hpp"
 
 namespace myvector {
 
@@ -166,7 +167,7 @@ class Vector {
             Fill(allocator_, begin(), end());
         }
 
-    template<typename InputIt, typename = std::_RequireInputIter<InputIt>>
+    template<myconcept::InputIterator InputIt>
     constexpr Vector(InputIt first, InputIt last, const allocator_type& alloc = allocator_type()):
         allocator_(alloc),
         sz_(std::distance(first, last)),
@@ -671,12 +672,12 @@ class Vector {
         Destroy(allocator_, begin(), end());
     }
 
-    template<typename U, typename... Args, std::enable_if_t<std::is_trivially_copyable_v<U>, bool> = true>
+    template<myconcept::TriviallyCopyable U, typename... Args>
     void MoveBeforeEmplace(iterator pos) {
         std::memmove((pos + 1).ptr_, pos.ptr_, (end() - pos) * sizeof(value_type));
     }
 
-    template<typename U, typename... Args, std::enable_if_t<!std::is_trivially_copyable_v<U>, bool> = true>
+    template<myconcept::NotTriviallyCopyable U, typename... Args>
     void MoveBeforeEmplace(iterator pos) {
         std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
         for (iterator it = end() - 1; it != pos; --it) {
