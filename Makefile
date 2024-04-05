@@ -5,10 +5,13 @@ DEDFLAGS += -D _DEBUG -ggdb3 -std=c++23 -O0 -Wall -Wextra -Weffc++ -Waggressive-
 OBJDIR = obj/
 SRCDIR = src/
 
-all: test
+all: test svin
 
 test: src/main.cpp
 	$(CC) -o test src/main.cpp $(DEDFLAGS)
+
+svin: src/sfinae.cpp
+	$(CC) -o svin src/sfinae.cpp -std=c++23
 
 $(OBJDIR)%.o: $(SRCDIR)%.cpp
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -17,4 +20,4 @@ clean:
 	rm obj/*.o -f
 	clear
 	
-.PHONY: test
+.PHONY: test svin
