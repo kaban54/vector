@@ -3,6 +3,19 @@
 
 namespace myconcept {
 
+template<bool B, class T = void>
+struct enable_if {};
+ 
+template<class T>
+struct enable_if<true, T> {
+    using type = T;
+};
+
+template<bool Cond, typename T = void>
+using enable_if_t = typename enable_if<Cond, T>::type;
+
+
+
 template <typename T>
 concept TriviallyCopyable = std::is_trivially_copyable_v<T>;
 

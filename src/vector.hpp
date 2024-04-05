@@ -12,7 +12,6 @@ namespace myvector {
 
 using myforward::forward;
 
-
 template<typename T, typename Allocator = std::allocator<T>>
 class Vector {
     public:
@@ -638,12 +637,12 @@ class Vector {
         }
     }
 
-    template<typename U, std::enable_if_t<std::is_trivially_copyable_v<U>, bool> = true>
+    template<typename U, myconcept::enable_if_t<std::is_trivially_copyable_v<U>, bool> = true>
     constexpr void ReserveCopy(pointer new_data, size_type new_cap) {
         std::memcpy(new_data, data_, sz_ * sizeof(value_type));
     }
 
-    template<typename U, std::enable_if_t<!std::is_trivially_copyable_v<U>, bool> = true>
+    template<typename U, myconcept::enable_if_t<!std::is_trivially_copyable_v<U>, bool> = true>
     constexpr void ReserveCopy(pointer new_data, size_type new_cap) {
         if (std::is_nothrow_move_constructible_v<value_type> || 
             std::is_same_v<std::__is_copy_insertable<allocator_type>, std::false_type>) {
