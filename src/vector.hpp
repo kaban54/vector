@@ -510,10 +510,7 @@ class Vector {
         iterator pos = begin() + dif;
 
         if (pos != end()) {
-            std::allocator_traits<allocator_type>::construct(allocator_, (end() + count - 1).ptr_, std::move(back()));
-            for (auto it = end() + count - 2; it != pos + count - 1; --it) {
-                *it = std::move(*(it - count));
-            }
+            MoveBeforeInsert<value_type>(pos, count);
         }
         Fill(allocator_, pos, pos + count, val);
         sz_ += count;
@@ -528,7 +525,7 @@ class Vector {
         iterator pos = begin() + (int)dif;
 
         if (pos != end()) {
-            MoveBeforeEmplace<value_type>(pos);
+            MoveBeforeInsert<value_type>(pos, 1);
         }
 
         std::allocator_traits<allocator_type>::construct(allocator_, pos.ptr_, forward<Args>(args)...);
@@ -672,16 +669,16 @@ class Vector {
         Destroy(allocator_, begin(), end());
     }
 
-    template<myconcept::TriviallyCopyable U, typename... Args>
-    void MoveBeforeEmplace(iterator pos) {
-        std::memmove((pos + 1).ptr_, pos.ptr_, (end() - pos) * sizeof(value_type));
+    template<myconcept::TriviallyCopyable U>
+    void MoveBeforeInsert(iterator pos, size_type count) {
+        std::memmove((pos + count).ptr_, pos.ptr_, (end() - pos) * sizeof(value_type));
     }
 
-    template<myconcept::NotTriviallyCopyable U, typename... Args>
-    void MoveBeforeEmplace(iterator pos) {
-        std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
-        for (iterator it = end() - 1; it != pos; --it) {
-            *it = std::move(*(it - 1));
+    template<myconcept::NotTriviallyCopyable U>
+    void MoveBeforeInsert(iterator pos, size_type count) {
+        std::allocator_traits<allocator_type>::construct(allocator_, (end() + count - 1).ptr_, std::move(back()));
+        for (auto it = end() + count - 2; it != pos + count - 1; --it) {
+            *it = std::move(*(it - count));
         }
     }
 };
