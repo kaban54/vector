@@ -404,7 +404,15 @@ class Vector {
     }
 
     constexpr void reserve(size_type new_cap) {
-        Reserve<value_type>(new_cap);
+        if (new_cap <= cp_) return;
+        if (new_cap >= max_size()) throw std::length_error("Vector::reserve");
+        pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, new_cap);
+
+        ReserveCopy<value_type>(new_data, new_cap);
+
+        std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
+        data_ = new_data;
+        cp_ = new_cap;
     }
 
     constexpr size_type capacity() const noexcept {
@@ -496,7 +504,7 @@ class Vector {
     constexpr iterator insert(const_iterator position, size_type count, const_reference val) {
         difference_type dif = position - cbegin();
         if (sz_ + count > cp_) {
-            Reserve<value_type>( (sz_ + count > cp_ * 2) ? (sz_ + count) : (cp_ * 2) );
+            reserve( (sz_ + count > cp_ * 2) ? (sz_ + count) : (cp_ * 2) );
         }
         iterator pos = begin() + dif;
 
@@ -514,7 +522,7 @@ class Vector {
     template<typename... Args>
     constexpr iterator emplace(const_iterator position, Args&&... args) {difference_type dif = position - cbegin();
         if (sz_ == cp_) {
-            Reserve<value_type>(cp_ == 0 ? 2 : cp_ * 2);
+            reserve(cp_ == 0 ? 2 : cp_ * 2);
         }
         iterator pos = begin() + (int)dif;
 
@@ -559,7 +567,7 @@ class Vector {
             Destroy(allocator_, begin() + count, end());
         }
         else {
-            Reserve<value_type>(count);
+            reserve(count);
             Fill(allocator_, end(), begin() + count);
         }
         sz_ = count;
@@ -571,7 +579,7 @@ class Vector {
             Destroy(allocator_, begin() + count, end());
         }
         else {
-            Reserve<value_type>(count);
+            reserve(count);
             Fill(allocator_, end(), begin() + count, val);
         }
         sz_ = count;
@@ -633,28 +641,12 @@ class Vector {
     }
 
     template<typename U, std::enable_if_t<std::is_trivially_copyable_v<U>, bool> = true>
-    constexpr void Reserve(size_type new_cap) {
-        std::cout << "r1\n";
-        if (new_cap <= cp_) return;
-        if (new_cap >= max_size()) throw std::length_error("Vector::reserve");
-
-        pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, new_cap);
-
+    constexpr void ReserveCopy(pointer new_data, size_type new_cap) {
         std::memcpy(new_data, data_, sz_ * sizeof(value_type));
-
-        std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
-        data_ = new_data;
-        cp_ = new_cap;
     }
 
     template<typename U, std::enable_if_t<!std::is_trivially_copyable_v<U>, bool> = true>
-    constexpr void Reserve(size_type new_cap) {
-        std::cout << "r2\n";
-        if (new_cap <= cp_) return;
-        if (new_cap >= max_size()) throw std::length_error("Vector::reserve");
-
-        pointer new_data = std::allocator_traits<allocator_type>::allocate(allocator_, new_cap);
-
+    constexpr void ReserveCopy(pointer new_data, size_type new_cap) {
         if (std::is_nothrow_move_constructible_v<value_type> || 
             std::is_same_v<std::__is_copy_insertable<allocator_type>, std::false_type>) {
                 Move(allocator_, begin(), end(), iterator(new_data));
@@ -677,23 +669,15 @@ class Vector {
         }
 
         Destroy(allocator_, begin(), end());
-        if (data_ != nullptr) {
-            std::allocator_traits<allocator_type>::deallocate(allocator_, data_, cp_);
-        }
-
-        data_ = new_data;
-        cp_ = new_cap;
     }
 
     template<typename U, typename... Args, std::enable_if_t<std::is_trivially_copyable_v<U>, bool> = true>
     void MoveBeforeEmplace(iterator pos) {
-        std::cout << "empl1\n";
         std::memmove((pos + 1).ptr_, pos.ptr_, (end() - pos) * sizeof(value_type));
     }
 
     template<typename U, typename... Args, std::enable_if_t<!std::is_trivially_copyable_v<U>, bool> = true>
     void MoveBeforeEmplace(iterator pos) {
-        std::cout << "empl2\n";
         std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
         for (iterator it = end() - 1; it != pos; --it) {
             *it = std::move(*(it - 1));
