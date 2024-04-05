@@ -512,18 +512,14 @@ class Vector {
     }
 
     template<typename... Args>
-    constexpr iterator emplace(const_iterator position, Args&&... args) {
-        difference_type dif = position - cbegin();
+    constexpr iterator emplace(const_iterator position, Args&&... args) {difference_type dif = position - cbegin();
         if (sz_ == cp_) {
             Reserve<value_type>(cp_ == 0 ? 2 : cp_ * 2);
         }
         iterator pos = begin() + (int)dif;
 
         if (pos != end()) {
-            std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
-            for (iterator it = end() - 1; it != pos; --it) {
-                *it = std::move(*(it - 1));
-            }
+            MoveBeforeEmplace<value_type>(pos);
         }
 
         std::allocator_traits<allocator_type>::construct(allocator_, pos.ptr_, forward<Args>(args)...);
@@ -638,6 +634,7 @@ class Vector {
 
     template<typename U, std::enable_if_t<std::is_trivially_copyable_v<U>, bool> = true>
     constexpr void Reserve(size_type new_cap) {
+        std::cout << "r1\n";
         if (new_cap <= cp_) return;
         if (new_cap >= max_size()) throw std::length_error("Vector::reserve");
 
@@ -652,6 +649,7 @@ class Vector {
 
     template<typename U, std::enable_if_t<!std::is_trivially_copyable_v<U>, bool> = true>
     constexpr void Reserve(size_type new_cap) {
+        std::cout << "r2\n";
         if (new_cap <= cp_) return;
         if (new_cap >= max_size()) throw std::length_error("Vector::reserve");
 
@@ -685,6 +683,21 @@ class Vector {
 
         data_ = new_data;
         cp_ = new_cap;
+    }
+
+    template<typename U, typename... Args, std::enable_if_t<std::is_trivially_copyable_v<U>, bool> = true>
+    void MoveBeforeEmplace(iterator pos) {
+        std::cout << "empl1\n";
+        std::memmove((pos + 1).ptr_, pos.ptr_, (end() - pos) * sizeof(value_type));
+    }
+
+    template<typename U, typename... Args, std::enable_if_t<!std::is_trivially_copyable_v<U>, bool> = true>
+    void MoveBeforeEmplace(iterator pos) {
+        std::cout << "empl2\n";
+        std::allocator_traits<allocator_type>::construct(allocator_, end().ptr_, std::move(back()));
+        for (iterator it = end() - 1; it != pos; --it) {
+            *it = std::move(*(it - 1));
+        }
     }
 };
 

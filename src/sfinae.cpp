@@ -50,7 +50,6 @@ void Test1(const std::string& name) {
 
 
 int main() {
-    std::cout << std::is_trivially_copyable_v<NotTriviallyCopyable> << '\n';
     Test1<TriviallyCopyable>("TriviallyCopyable");
     Test1<NotTriviallyCopyable>("NotTriviallyCopyable");
     return 0;
