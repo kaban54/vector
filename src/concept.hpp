@@ -42,14 +42,7 @@ template <typename T>
 struct is_arithmetic : integral_constant<bool, std::is_integral<T>::value ||
                                                std::is_floating_point<T>::value> {};
 template <typename T>
-using is_arithmetic_v = is_arithmetic::value;
-
-
-// template <typename T>
-// struct is_enum : integral_constant<bool, > {};
-// template <typename T>
-// using is_enum_v = is_enum::value;
-
+using is_arithmetic_v = is_arithmetic<T>::value;
 
 
 template<typename T>
@@ -59,7 +52,7 @@ struct is_scalar : integral_constant<bool, is_arithmetic<T>::value ||
                                            std::is_member_pointer<T>::value || 
                                            std::is_null_pointer<T>::value> {};
 template <typename T>
-using is_scalar_v = is_scalar::value;
+using is_scalar_v = is_scalar<T>::value;
 
 
 template <typename T>
